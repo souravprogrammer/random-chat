@@ -8,12 +8,12 @@ async function addUser({ id, peerId, mode }) {
   users.push({
     id,
     peerId,
-    lookingForPeers: true,
+    lookingForPeers: false,
     connectedPeerId: null,
     busy: false,
     mode: mode,
   });
-  lookForRoom(id);
+  // lookForRoom(id);
 }
 async function removeUser(id) {
   const userIndex = users.findIndex((user) => user.id === id);
@@ -23,14 +23,14 @@ async function removeUser(id) {
     const disconnectedUser = users[userIndex];
 
     users.splice(userIndex, 1);
-    const connectedPeerIndex = users.findIndex(
-      (user) => user.id === disconnectedUser.connectedPeerId
-    );
-    if (connectedPeerIndex !== -1) {
-      users[connectedPeerIndex].lookingForPeers = true;
-      users[connectedPeerIndex].busy = false;
-      users[connectedPeerIndex].connectedPeerId = null;
-    }
+    // const connectedPeerIndex = users.findIndex(
+    //   (user) => user.id === disconnectedUser.connectedPeerId
+    // );
+    // if (connectedPeerIndex !== -1) {
+    //   users[connectedPeerIndex].lookingForPeers = true;
+    //   users[connectedPeerIndex].busy = false;
+    //   users[connectedPeerIndex].connectedPeerId = null;
+    // }
 
     // If the user was connected to another peer, notify that peer
     return disconnectedUser;
@@ -44,7 +44,7 @@ async function disconenctUser(id) {
   if (userIndex !== -1) {
     const disconnectedUser = { ...users[userIndex] };
 
-    users[userIndex].lookingForPeers = true;
+    users[userIndex].lookingForPeers = false;
     users[userIndex].busy = false;
     users[userIndex].connectedPeerId = null;
 
@@ -53,9 +53,9 @@ async function disconenctUser(id) {
       (user) => user.id === disconnectedUser.connectedPeerId
     );
     if (connectedPeerIndex !== -1) {
-      users[connectedPeerIndex].lookingForPeers = true;
-      users[connectedPeerIndex].busy = false;
       users[connectedPeerIndex].connectedPeerId = null;
+      users[connectedPeerIndex].lookingForPeers = false;
+      users[connectedPeerIndex].busy = false;
     }
 
     // If the user was connected to another peer, notify that peer
@@ -106,6 +106,19 @@ async function lookForRoom(id, lastPeer) {
     io.to(socket.id).emit("no_active_peers_found");
   }
 }
+async function addInQueue(id) {
+  const userIndexCaller = users.findIndex((user) => user.id === id);
+  if (userIndexCaller === -1) return;
+
+  try {
+    users[userIndexCaller].lookingForPeers = true;
+    users[userIndexCaller].busy = false;
+    users[userIndexCaller].connectedPeerId = null;
+    await lookForRoom(id);
+  } catch (err) {
+    console.error(err.message);
+  }
+}
 function setIo(i) {
   io = i;
 }
@@ -117,4 +130,5 @@ export {
   setIo,
   disconenctUser,
   lookForRoom,
+  addInQueue,
 };

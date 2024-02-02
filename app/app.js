@@ -11,6 +11,7 @@ import {
   setIo,
   disconenctUser,
   lookForRoom,
+  addInQueue,
 } from "./src/lib/queue.js";
 import Events, { MODE } from "./src/lib/Events.js";
 const LOCK_KEY = "USERS";
@@ -62,7 +63,7 @@ io.on("connection", async (socket) => {
         );
         // looking for the peer after user is disconnected
         //id , last-peerId
-        await lookForRoom(disconnectedUser.connectedPeerId, socket.id);
+        // await lookForRoom(disconnectedUser.connectedPeerId, socket.id);
       }
     });
   });
@@ -84,8 +85,14 @@ io.on("connection", async (socket) => {
           "peer_disconnected",
           disconnectedUser
         );
-        await lookForRoom(socket.id, disconnectedUser.connectedPeerId);
+        // await lookForRoom(socket.id, disconnectedUser.connectedPeerId);
       }
+    });
+  });
+  socket.on("start_looking", async () => {
+    console.log("start_looking....", socket.id);
+    lock.acquire(LOCK_KEY, async () => {
+      await addInQueue(socket.id);
     });
   });
 });
