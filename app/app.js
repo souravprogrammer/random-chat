@@ -12,7 +12,7 @@ import {
   disconenctUser,
   lookForRoom,
   addInQueue,
-} from "./src/lib/queue.js";
+} from "./src/lib/socketHandler.js";
 import Events, { MODE } from "./src/lib/Events.js";
 const LOCK_KEY = "USERS";
 const lock = new AsyncLock({ Promise: q });
@@ -27,7 +27,7 @@ const io = new Server(server, {
 
 io.on("connection", async (socket) => {
   socket.on(Events.CONNECTPEER, (data) => {
-    console.log("conenct peer");
+    // console.log("conenct peer");
 
     lock.acquire(LOCK_KEY, async () => {
       await addUser({
@@ -42,7 +42,7 @@ io.on("connection", async (socket) => {
     //   peerId: data.peerId ?? null,
     //   timeStamp: Date.now(),
     // });
-    console.log("conenct");
+    // console.log("conenct");
   });
   // this event will call by the client while it's waiting for too long
   socket.on(Events.LOOK_FOR_PEER, async () => {
@@ -90,22 +90,22 @@ io.on("connection", async (socket) => {
     });
   });
   socket.on("start_looking", async () => {
-    console.log("start_looking....", socket.id);
+    // console.log("start_looking....", socket.id);
     lock.acquire(LOCK_KEY, async () => {
       await addInQueue(socket.id);
     });
   });
 });
 setIo(io);
-setInterval(() => {
-  console.log(
-    "--------------------------------connected users START--------------------------------"
-  );
-  console.table(users);
-  console.log(
-    "--------------------------------connected users END --------------------------------"
-  );
-}, 5000);
+// setInterval(() => {
+//   console.log(
+//     "--------------------------------connected users START--------------------------------"
+//   );
+//   console.table(users);
+//   console.log(
+//     "--------------------------------connected users END --------------------------------"
+//   );
+// }, 5000);
 
 server.listen(PORT, (err) => {
   if (err) console.log(err.message);

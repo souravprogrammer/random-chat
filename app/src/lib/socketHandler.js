@@ -102,7 +102,7 @@ async function lookForRoom(id, lastPeer) {
     io.to(id).emit("peer_matched", choosenPeer);
     io.to(choosenPeer.id).emit("incoming_peer_request");
   } else {
-    console.log("no peer");
+    // console.log("no peer");
     io.to(socket.id).emit("no_active_peers_found");
   }
 }
