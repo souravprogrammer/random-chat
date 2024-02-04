@@ -36,6 +36,7 @@ io.on("connection", async (socket) => {
         timeStamp: Date.now(),
         mode: data.mode,
       });
+      io.emit("online", { count: users?.length });
     });
     // addUser({
     //   id: socket.id,
@@ -65,6 +66,7 @@ io.on("connection", async (socket) => {
         //id , last-peerId
         // await lookForRoom(disconnectedUser.connectedPeerId, socket.id);
       }
+      io.emit("online", { count: users?.length });
     });
   });
   socket.on("is_busy", (data) => {
