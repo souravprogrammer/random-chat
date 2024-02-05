@@ -27,6 +27,17 @@ const io = new Server(server, {
 });
 
 io.on("connection", async (socket) => {
+  function destroy() {
+    try {
+      socket.disconnect();
+      socket.removeAllListeners();
+      socket = null; //this will kill all event listeners working with socket
+
+      //set some other stuffs to NULL
+    } catch (err) {
+      console.log("Error while trying to close connection", err.message);
+    }
+  }
   const peerConnect = (data) => {
     // console.log("conenct peer");
     lock.acquire(LOCK_KEY, async () => {
@@ -90,10 +101,10 @@ io.on("connection", async (socket) => {
       socket.off(Events.LOOK_FOR_PEER, lookForPeers);
       socket.off("start_looking", startLooking);
       socket.off("is_busy", isBusy);
-
       socket.off("peer_disconnected", peerDisconnected);
       socket.off("disconnect", disconnect);
-      socket = null;
+      destroy();
+      // socket = null;
     });
   };
   socket.on(Events.CONNECTPEER, peerConnect);
