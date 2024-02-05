@@ -2,8 +2,6 @@ import { MODE } from "./Events.js";
 
 let io = null;
 const users = [];
-const activeRooms = [];
-let roomId = 0;
 async function addUser({ id, peerId, mode }) {
   users.push({
     id,
@@ -63,7 +61,6 @@ async function disconenctUser(id) {
   }
 }
 async function lookForRoom(id, lastPeer) {
-  // if (!(users.length <= 1)) return;
   const userIndexCaller = users.findIndex((user) => user.id === id);
   if (userIndexCaller === -1) return;
   if (users[userIndexCaller].busy) return;
@@ -77,8 +74,6 @@ async function lookForRoom(id, lastPeer) {
     );
   });
   // console.table("-------------avilablePeers----------- " + id);
-
-  // console.table(avilablePeers);
 
   if (avilablePeers.length <= 0) return;
   const choosenPeer =
@@ -126,7 +121,6 @@ export {
   users,
   addUser,
   removeUser,
-  activeRooms,
   setIo,
   disconenctUser,
   lookForRoom,
