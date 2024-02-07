@@ -96,13 +96,13 @@ io.on("connection", async (socket) => {
         );
       }
       io.emit("online", { count: users?.length });
-      socket.off(Events.CONNECTPEER, peerConnect);
+      socket.off(Events.CONNECTPEER);
       // this event will call by the client while it's waiting for too long
-      socket.off(Events.LOOK_FOR_PEER, lookForPeers);
-      socket.off("start_looking", startLooking);
-      socket.off("is_busy", isBusy);
-      socket.off("peer_disconnected", peerDisconnected);
-      socket.off("disconnect", disconnect);
+      socket.off(Events.LOOK_FOR_PEER);
+      socket.off("start_looking");
+      socket.off("is_busy");
+      socket.off("peer_disconnected");
+      socket.off("disconnect");
       destroy();
       // socket = null;
     });
