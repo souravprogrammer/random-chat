@@ -1,8 +1,10 @@
 import { app } from "./config/express.config.js";
+import AppConfig from "./config/app.config.js";
+import mongoose from "mongoose";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import AsyncLock from "async-lock";
 import q from "q";
+import AsyncLock from "async-lock";
 
 import {
   addUser,
@@ -13,12 +15,14 @@ import {
   lookForRoom,
   addInQueue,
 } from "./src/lib/socketHandler.js";
-import socketWrapper from "./src/lib/SocketWrapper.js";
 import Events, { MODE } from "./src/lib/Events.js";
+import ChatMatchHandler from "./src/utils/ChatMatchHandler.js";
+
 const LOCK_KEY = "USERS";
 const lock = new AsyncLock({ Promise: q });
 const PORT = process.env.PORT || 9000;
 const server = createServer(app);
+
 const io = new Server(server, {
   cors: {
     origin: true,
@@ -27,96 +31,22 @@ const io = new Server(server, {
 });
 
 io.on("connection", async (socket) => {
-  function destroy() {
-    try {
-      socket.disconnect();
-      socket.removeAllListeners();
-      socket = null; //this will kill all event listeners working with socket
-
-      //set some other stuffs to NULL
-    } catch (err) {
-      console.log("Error while trying to close connection", err.message);
-    }
-  }
-  const peerConnect = (data) => {
-    // console.log("conenct peer");
-    lock.acquire(LOCK_KEY, async () => {
-      await addUser({
-        id: socket.id,
-        peerId: data.peerId ?? null,
-        timeStamp: Date.now(),
-        mode: data.mode,
-      });
-      io.emit("online", { count: users?.length });
-    });
-  };
-  const lookForPeers = async () => {
-    lock.acquire(LOCK_KEY, async () => {
-      await lookForRoom(socket.id);
-    });
-  };
-
-  const peerDisconnected = async (reason) => {
-    // this action will call amnually when you look for the another peer to conenct
-
-    lock.acquire(LOCK_KEY, async () => {
-      const disconnectedUser = await disconenctUser(socket.id);
-      if (disconnectedUser?.connectedPeerId) {
-        io.to(disconnectedUser.connectedPeerId).emit(
-          "peer_disconnected",
-          disconnectedUser
-        );
-        // await lookForRoom(socket.id, disconnectedUser.connectedPeerId);
-      }
-    });
-  };
-  const startLooking = async () => {
-    // console.log("start_looking....", socket.id);
-    lock.acquire(LOCK_KEY, async () => {
-      await addInQueue(socket.id);
-    });
-  };
-  const isBusy = (data) => {
-    const user = users.find((f) => f.id === socket.id);
-    if (user.busy) {
-      socket.emit(Events.PEER_STATUS, data);
-    } else {
-      socket.emit(Events.PEER_STATUS);
-    }
-  };
-  const disconnect = async (reason) => {
-    lock.acquire(LOCK_KEY, async () => {
-      const disconnectedUser = await removeUser(socket.id);
-
-      if (!disconnectedUser) return;
-      if (disconnectedUser.connectedPeerId) {
-        io.to(disconnectedUser.connectedPeerId).emit(
-          "peer_disconnected",
-          disconnectedUser
-        );
-      }
-      io.emit("online", { count: users?.length });
-      socket.off(Events.CONNECTPEER);
-      // this event will call by the client while it's waiting for too long
-      socket.off(Events.LOOK_FOR_PEER);
-      socket.off("start_looking");
-      socket.off("is_busy");
-      socket.off("peer_disconnected");
-      socket.off("disconnect");
-      destroy();
-      // socket = null;
-    });
-  };
-  socket.on(Events.CONNECTPEER, peerConnect);
-  // this event will call by the client while it's waiting for too long
-  socket.on(Events.LOOK_FOR_PEER, lookForPeers);
-  socket.on("start_looking", startLooking);
-  socket.on("is_busy", isBusy);
-
-  socket.on("peer_disconnected", peerDisconnected);
-  socket.on("disconnect", disconnect);
+  ChatMatchHandler(socket, io);
 });
 setIo(io);
+async function start(server) {
+  try {
+    await mongoose.connect(AppConfig.DB_URL);
+    await server.listen(PORT, (err) => {
+      if (err) console.log(err.message);
+      console.log("server is listening on port", PORT);
+    });
+    console.log("Database Connected...");
+  } catch (err) {
+    console.log("Database Error", err.message, AppConfig.DB_URL);
+  }
+}
+start(server);
 // setInterval(() => {
 //   console.log(
 //     "--------------------------------connected users START--------------------------------"
@@ -138,7 +68,7 @@ setIo(io);
 //         Heap Used: ${bytesToMB(memoryUsage.heapUsed)} MB,
 //         External: ${bytesToMB(memoryUsage.external)} MB`);
 // }, 5000);
-server.listen(PORT, (err) => {
-  if (err) console.log(err.message);
-  console.log("server is listening on port", PORT);
-});
+// server.listen(PORT, (err) => {
+//   if (err) console.log(err.message);
+//   console.log("server is listening on port", PORT);
+// });
