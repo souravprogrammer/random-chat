@@ -1,11 +1,14 @@
-import { users } from "../lib/socketHandler.js";
-
-function getlist(req, res) {
+// import { users } from "../lib/socketHandler.js";
+import { ChatUserModel } from "../model/chatUser.model.js";
+async function getlist(req, res) {
+  const users = await ChatUserModel.find({});
   res.json({ connectedUsers: users, message: "total connected users" });
 }
 
-function totalOnline(req, res) {
-  res.json({ count: users?.length, message: "total online users" });
+async function totalOnline(req, res) {
+  const count = await ChatUserModel.countDocuments({});
+
+  res.json({ count: count, message: "total online users" });
 }
 
 export { getlist, totalOnline };

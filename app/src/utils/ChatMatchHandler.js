@@ -4,13 +4,14 @@ import Events from "../lib/Events.js";
 // const matchingSystem = new MatchingSystem({ startagy: "inMemory" });
 const matchingSystem = new MatchingSystem({ startagy: "mongoDB" });
 
+let count = 0;
 export default function ChatMatchHandler(socket, io) {
   function destroy() {
     try {
       socket.disconnect();
       socket.removeAllListeners();
-      socket = null; //this will kill all event listeners working with socket
-      //set some other stuffs to NULL
+      // socket = null; //this will kill all event listeners working with socket
+      // //set some other stuffs to NULL
     } catch (err) {
       console.log("Error while trying to close connection", err.message);
     }
@@ -21,8 +22,10 @@ export default function ChatMatchHandler(socket, io) {
       peerId: data.peerId ?? null,
       mode: data.mode,
       ip: socket?.handshake?.address,
+      name: data.name,
     });
-    const count = await matchingSystem.getConnections();
+
+    count = count + 1;
     io.emit("online", { count: count });
   };
   const lookForPeers = async () => {
@@ -46,16 +49,8 @@ export default function ChatMatchHandler(socket, io) {
     //   await addInQueue(socket.id);
     // });
   };
-  const isBusy = (data) => {
-    // const user = users.find((f) => f.id === socket.id);
-    // if (user.busy) {
-    //   socket.emit(Events.PEER_STATUS, data);
-    // } else {
-    //   socket.emit(Events.PEER_STATUS);
-    // }
-  };
+
   const disconnect = async (reason) => {
-    console.log("disconnect");
     matchingSystem.removeUser(socket.id, async (disconnectedUser) => {
       if (!disconnectedUser) return;
       if (disconnectedUser.connectedPeerId) {
@@ -64,21 +59,17 @@ export default function ChatMatchHandler(socket, io) {
           disconnectedUser
         );
       }
-      const count = await matchingSystem.getConnections();
+      count = count - 1;
       io.emit("online", { count: count });
 
       destroy();
     });
   };
-  socket.on(Events.CONNECTPEER, peerConnect);
   // this event will call by the client while it's waiting for too long
-  socket.on(Events.LOOK_FOR_PEER, lookForPeers);
+  // socket.on(Events.LOOK_FOR_PEER, lookForPeers);
+  // socket.on("is_busy", isBusy);
+  socket.on(Events.CONNECTPEER, peerConnect);
   socket.on("start_looking", startLooking);
-  socket.on("is_busy", isBusy);
   socket.on("peer_disconnected", peerDisconnected);
   socket.on("disconnect", disconnect);
 }
-
-// setInterval(() => {
-//   console.table(matchingSystem.adapter.users);
-// }, 5000);

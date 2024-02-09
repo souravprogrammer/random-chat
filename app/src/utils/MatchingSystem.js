@@ -1,5 +1,4 @@
 import AsyncLock from "async-lock";
-import { ChatUserModel } from "../model/chatUser.model.js";
 import MemmoryAdapter from "./MemmoryAdapter.js";
 import MongoDBAdapter from "./MongoDBAdapter.js";
 

@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 const ChatUserSchema = new mongoose.Schema(
   {
     id: { type: String, required: true, unique: true },
+    name: { type: String },
     peerId: { type: String, required: true, unique: true },
     lookingForPeers: { type: Boolean, required: true },
     busy: { type: Boolean, required: true },
