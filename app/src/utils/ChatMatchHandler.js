@@ -1,7 +1,8 @@
 import MatchingSystem from "./MatchingSystem.js";
 import Events from "../lib/Events.js";
 
-const matchingSystem = new MatchingSystem({ startagy: "inMemory" });
+// const matchingSystem = new MatchingSystem({ startagy: "inMemory" });
+const matchingSystem = new MatchingSystem({ startagy: "mongoDB" });
 
 export default function ChatMatchHandler(socket, io) {
   function destroy() {
@@ -15,31 +16,17 @@ export default function ChatMatchHandler(socket, io) {
     }
   }
   const peerConnect = async (data) => {
-    // console.log("conenct peer");
     matchingSystem.addUser({
       id: socket.id,
       peerId: data.peerId ?? null,
-      timeStamp: Date.now(),
       mode: data.mode,
+      ip: socket?.handshake?.address,
     });
     const count = await matchingSystem.getConnections();
     io.emit("online", { count: count });
-
-    // lock.acquire(LOCK_KEY, async () => {
-    //   await addUser({
-    //     id: socket.id,
-    //     peerId: data.peerId ?? null,
-    //     timeStamp: Date.now(),
-    //     mode: data.mode,
-    //   });
-    //   io.emit("online", { count: users?.length });
-    // });
   };
   const lookForPeers = async () => {
     await matchingSystem.lookForRoom({ id: socket.id, io });
-    // lock.acquire(LOCK_KEY, async () => {
-    //   await lookForRoom(socket.id);
-    // });
   };
   const peerDisconnected = async (reason) => {
     // this action will call amnually when you look for the another peer to conenct
@@ -68,6 +55,7 @@ export default function ChatMatchHandler(socket, io) {
     // }
   };
   const disconnect = async (reason) => {
+    console.log("disconnect");
     matchingSystem.removeUser(socket.id, async (disconnectedUser) => {
       if (!disconnectedUser) return;
       if (disconnectedUser.connectedPeerId) {
@@ -90,3 +78,7 @@ export default function ChatMatchHandler(socket, io) {
   socket.on("peer_disconnected", peerDisconnected);
   socket.on("disconnect", disconnect);
 }
+
+// setInterval(() => {
+//   console.table(matchingSystem.adapter.users);
+// }, 5000);

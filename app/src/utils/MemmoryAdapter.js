@@ -62,6 +62,7 @@ export default class MemmoryAdapter {
         user.mode === this.users[userIndexCaller].mode
       );
     });
+
     // console.table("-------------avilablePeers----------- " + id);
 
     if (avilablePeers.length <= 0) return;
