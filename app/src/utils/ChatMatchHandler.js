@@ -23,6 +23,7 @@ export default function ChatMatchHandler(socket, io) {
       mode: data.mode,
       ip: socket?.handshake?.address,
       name: data.name,
+      deviceToken: data.deviceToken,
     });
 
     count = count + 1;

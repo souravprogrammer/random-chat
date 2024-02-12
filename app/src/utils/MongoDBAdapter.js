@@ -1,7 +1,7 @@
 import { ChatUserModel } from "../model/chatUser.model.js";
 export default class mongoDBAdapter {
   constructor() {}
-  async addUser({ id, peerId, mode, ip, name }) {
+  async addUser({ id, peerId, mode, ip, name, deviceToken }) {
     const user = new ChatUserModel({
       id,
       peerId,
@@ -10,6 +10,7 @@ export default class mongoDBAdapter {
       busy: false,
       mode: mode,
       ip,
+      deviceToken,
       name,
     });
     await user.save();
@@ -34,7 +35,7 @@ export default class mongoDBAdapter {
     );
     return disconnectedUser;
   }
-  async lookForRoom({ id, lastPeer, io, mode = null }) {
+  async lookForRoom({ id, lastPeer, io, mode = null, user = null }) {
     const choosenPeers = await ChatUserModel.aggregate([
       { $match: { id: { $ne: id }, lookingForPeers: true, mode } },
       { $sample: { size: 1 } },
@@ -70,7 +71,7 @@ export default class mongoDBAdapter {
       await ChatUserModel.bulkWrite(updates, { ordered: false });
 
       io.to(id).emit("peer_matched", choosenPeers[0]);
-      io.to(choosenPeers[0].id).emit("incoming_peer_request");
+      io.to(choosenPeers[0].id).emit("incoming_peer_request", user);
     } else {
       // console.log("No matching documents found.");
       // io.to(id).emit("no_active_peers_found");
@@ -81,7 +82,7 @@ export default class mongoDBAdapter {
       { id },
       { lookingForPeers: true, busy: false }
     );
-    await this.lookForRoom({ id, io, mode: user?.mode });
+    await this.lookForRoom({ id, io, mode: user?.mode, user });
   }
   async getConnections() {
     return await ChatUserModel.countDocuments();
