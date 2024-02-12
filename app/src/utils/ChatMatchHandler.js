@@ -17,12 +17,12 @@ export default function ChatMatchHandler(socket, io) {
     }
   }
   const peerConnect = async (data) => {
-    const status = await repotedUSer(data.deviceToken);
+    const status = await repotedUSer({ deviceToken: data.deviceToken });
     if (status) {
       io.emit("report", { reportRecived: true });
       return;
     }
-    matchingSystem.addUser({
+    await matchingSystem.addUser({
       id: socket.id,
       peerId: data.peerId ?? null,
       mode: data.mode,
