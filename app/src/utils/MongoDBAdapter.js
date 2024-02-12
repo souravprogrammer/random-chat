@@ -27,10 +27,11 @@ export default class mongoDBAdapter {
 
     const disconnectedUser = await ChatUserModel.findOneAndUpdate(
       { id },
-      initialValues
+      initialValues,
+      { new: false }
     );
     await ChatUserModel.updateOne(
-      { id: disconnectedUser.connectedPeerId },
+      { id: disconnectedUser?.connectedPeerId },
       initialValues
     );
     return disconnectedUser;

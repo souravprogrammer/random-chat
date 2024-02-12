@@ -11,7 +11,7 @@ const ChatUserSchema = new mongoose.Schema(
     mode: { type: String, required: true },
     connectedPeerId: { type: String, default: null },
     ip: { type: String },
-    deviceToken: { type: String, required: true },
+    deviceToken: { type: String },
     created: { type: Date, default: Date.now }, // Field to track document creation time
   },
   { timestamps: true }

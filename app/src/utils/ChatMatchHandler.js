@@ -1,6 +1,6 @@
 import MatchingSystem from "./MatchingSystem.js";
 import Events from "../lib/Events.js";
-
+import repotedUSer from "./reportStatus.js";
 // const matchingSystem = new MatchingSystem({ startagy: "inMemory" });
 const matchingSystem = new MatchingSystem({ startagy: "mongoDB" });
 
@@ -17,6 +17,11 @@ export default function ChatMatchHandler(socket, io) {
     }
   }
   const peerConnect = async (data) => {
+    const status = await repotedUSer(data.deviceToken);
+    if (status) {
+      io.emit("report", { reportRecived: true });
+      return;
+    }
     matchingSystem.addUser({
       id: socket.id,
       peerId: data.peerId ?? null,
