@@ -6,6 +6,8 @@ const matchingSystem = new MatchingSystem({ startagy: "mongoDB" });
 
 let count = 0;
 export default function ChatMatchHandler(socket, io) {
+  console.log("connection");
+
   function destroy() {
     try {
       socket.disconnect();
@@ -39,6 +41,7 @@ export default function ChatMatchHandler(socket, io) {
   };
   const peerDisconnected = async (reason) => {
     // this action will call amnually when you look for the another peer to conenct
+
     await matchingSystem.disconenctUser(socket.id, (disconnectedUser) => {
       if (disconnectedUser?.connectedPeerId) {
         io.to(disconnectedUser.connectedPeerId).emit(
@@ -57,6 +60,8 @@ export default function ChatMatchHandler(socket, io) {
   };
 
   const disconnect = async (reason) => {
+    console.log("disconnected");
+
     matchingSystem.removeUser(socket.id, async (disconnectedUser) => {
       if (!disconnectedUser) return;
       if (disconnectedUser.connectedPeerId) {
